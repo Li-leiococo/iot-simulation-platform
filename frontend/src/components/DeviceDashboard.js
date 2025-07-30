@@ -1,20 +1,34 @@
-// src/components/DeviceDashboard.js
+import { useEffect, useState } from "react";
 
-import React from 'react';
+export default function DeviceDashboard({ token, onLogout }) {
+  const [config, setConfig] = useState(null);
 
-function DeviceDashboard({ onLogout }) {
-  const mockDeviceData = {
-    deviceId: 'sensor-123',
-    temperature: '72.3°F',
-    humidity: '48%',
-    status: 'Connected',
-    lastUpdated: new Date().toLocaleString(),
-  };
+  useEffect(() => {
+    async function fetchConfig() {
+      try {
+        const response = await fetch("http://localhost:5000/device/config", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) throw new Error("Failed to fetch config");
+
+        const data = await response.json();
+        setConfig(data);
+      } catch (err) {
+        console.error("Error fetching config:", err);
+      }
+    }
+
+    if (token) fetchConfig();
+  }, [token]);
 
   return (
-    <div className="max-w-3xl mx-auto mt-10 p-6 bg-white rounded shadow">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Device Dashboard</h2>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">IoT Device Dashboard</h1>
         <button
           onClick={onLogout}
           className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
@@ -23,31 +37,32 @@ function DeviceDashboard({ onLogout }) {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 text-lg">
-        <div className="bg-blue-100 p-4 rounded">
-          <p className="font-semibold">Device ID:</p>
-          <p>{mockDeviceData.deviceId}</p>
+      {!config ? (
+        <p>Loading config...</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-white shadow rounded p-4">
+            <h2 className="text-sm text-gray-500">Device ID</h2>
+            <p className="text-lg font-semibold">{config.device_id}</p>
+          </div>
+          <div className="bg-white shadow rounded p-4">
+            <h2 className="text-sm text-gray-500">Sampling Rate</h2>
+            <p className="text-lg font-semibold">{config.sampling_rate}</p>
+          </div>
+          <div className="bg-white shadow rounded p-4">
+            <h2 className="text-sm text-gray-500">Status</h2>
+            <p className="text-lg font-semibold text-green-600">Connected</p>
+          </div>
         </div>
-        <div className="bg-green-100 p-4 rounded">
-          <p className="font-semibold">Status:</p>
-          <p>{mockDeviceData.status}</p>
-        </div>
-        <div className="bg-yellow-100 p-4 rounded">
-          <p className="font-semibold">Temperature:</p>
-          <p>{mockDeviceData.temperature}</p>
-        </div>
-        <div className="bg-purple-100 p-4 rounded">
-          <p className="font-semibold">Humidity:</p>
-          <p>{mockDeviceData.humidity}</p>
-        </div>
-        <div className="col-span-2 bg-gray-100 p-4 rounded">
-          <p className="font-semibold">Last Updated:</p>
-          <p>{mockDeviceData.lastUpdated}</p>
-        </div>
+      )}
+
+      <div className="bg-white shadow rounded p-4">
+        <h2 className="text-lg font-semibold mb-2">Raw Config</h2>
+        <pre className="bg-gray-100 p-2 rounded text-sm">
+          {JSON.stringify(config, null, 2)}
+        </pre>
       </div>
     </div>
   );
 }
-
-export default DeviceDashboard;
 

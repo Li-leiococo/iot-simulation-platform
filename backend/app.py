@@ -19,6 +19,17 @@ def login():
 
     token = generate_token(username)
     return jsonify({'token': token})
+    
+@app.route('/device/config')
+@token_required
+def device_config(decoded):
+    config = {
+        "device_id": decoded['sub'],
+        "sampling_rate": "10s",
+        "message": "Config fetched successfully 🎉"
+    }
+    return jsonify(config)
+
 
 @app.route('/device/data', methods=['POST'])
 @token_required
@@ -32,3 +43,9 @@ def health():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
+    
+    from flask import jsonify
+from auth import token_required
+
+
+
