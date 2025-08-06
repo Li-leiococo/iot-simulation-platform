@@ -1,7 +1,12 @@
+// src/components/DeviceDashboard.js
+
+import React from 'react';
+
 import { useEffect, useState } from "react";
 
-export default function DeviceDashboard({ token, onLogout }) {
+export default function DeviceDashboard({ token }) {
   const [config, setConfig] = useState(null);
+  const [weather, setWeather] = useState(null);
 
   useEffect(() => {
     async function fetchConfig() {
@@ -9,7 +14,7 @@ export default function DeviceDashboard({ token, onLogout }) {
         const response = await fetch("http://localhost:5000/device/config", {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${token}`
+            "Authorization": `Bearer ${token}`
           }
         });
 
@@ -24,45 +29,50 @@ export default function DeviceDashboard({ token, onLogout }) {
 
     if (token) fetchConfig();
   }, [token]);
+  
+  // Fetch live weather
+  useEffect(() => {
+    async function fetchWeather() {
+      try {
+        const res = await fetch("http://localhost:5000/api/weather/latest");
+        const data = await res.json();
+        setWeather(data);
+      } catch (err) {
+        console.error("Error fetching weather:", err);
+      }
+    }
+
+    fetchWeather();
+    const interval = setInterval(fetchWeather, 10000); // refresh every 10s
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">IoT Device Dashboard</h1>
-        <button
-          onClick={onLogout}
-          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-        >
-          Logout
-        </button>
-      </div>
-
-      {!config ? (
-        <p>Loading config...</p>
+  <div className="p-4 space-y-6">
+     <div>
+      <h2 className="text-xl font-semibold mb-2">Device Config</h2>
+      {config ? (
+        <pre className="bg-gray-100 p-2 rounded text-sm">{JSON.stringify(config, null, 2)}</pre>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white shadow rounded p-4">
-            <h2 className="text-sm text-gray-500">Device ID</h2>
-            <p className="text-lg font-semibold">{config.device_id}</p>
-          </div>
-          <div className="bg-white shadow rounded p-4">
-            <h2 className="text-sm text-gray-500">Sampling Rate</h2>
-            <p className="text-lg font-semibold">{config.sampling_rate}</p>
-          </div>
-          <div className="bg-white shadow rounded p-4">
-            <h2 className="text-sm text-gray-500">Status</h2>
-            <p className="text-lg font-semibold text-green-600">Connected</p>
-          </div>
-        </div>
+        <p>Loading config...</p>
       )}
-
-      <div className="bg-white shadow rounded p-4">
-        <h2 className="text-lg font-semibold mb-2">Raw Config</h2>
-        <pre className="bg-gray-100 p-2 rounded text-sm">
-          {JSON.stringify(config, null, 2)}
-        </pre>
-      </div>
     </div>
+    <div>
+        <h2 className="text-xl font-semibold mb-2">🌤 Live Weather Data</h2>
+        {weather ? (
+          <div className="bg-blue-50 p-4 rounded shadow text-sm">
+            <p><strong>Location:</strong> {weather.location}</p>
+            <p><strong>Temperature:</strong> {weather.temperature}°F</p>
+            <p><strong>Humidity:</strong> {weather.humidity}%</p>
+            <p><strong>Condition:</strong> {weather.condition}</p>
+            <p className="text-gray-500 text-xs">Last updated: {new Date(weather.timestamp).toLocaleString()}</p>
+          </div>
+        ) : (
+          <p>Loading weather...</p>
+        )}
+      </div>
+       </div>
   );
 }
+
 
