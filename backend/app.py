@@ -65,7 +65,30 @@ def get_latest_weather():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-        
+ 
+@app.route("/api/weather/history", methods=["GET"])
+def get_weather_history():
+    device_id = request.args.get("device_id", "public-weather")
+    limit = int(request.args.get("limit", 20))
+
+    try:
+        response = table.query(
+            KeyConditionExpression=Key("device_id").eq(device_id),
+            ScanIndexForward=False,
+            Limit=limit,
+        )
+
+        items = response.get("Items", [])
+        # Convert Decimal to float (to avoid React crash)
+        for item in items:
+            item["temperature"] = float(item["temperature"])
+            item["humidity"] = float(item["humidity"])
+
+        # Reverse so newest is at bottom of chart
+        return jsonify(list(reversed(items)))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500    
+          
 @app.route('/')
 def health():
     return "IoT Simulation Backend Running"

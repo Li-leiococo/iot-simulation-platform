@@ -3,10 +3,15 @@
 import React from 'react';
 
 import { useEffect, useState } from "react";
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+} from 'recharts';
+
 
 export default function DeviceDashboard({ token }) {
   const [config, setConfig] = useState(null);
   const [weather, setWeather] = useState(null);
+  const [history, setHistory] = useState([]);
 
   useEffect(() => {
     async function fetchConfig() {
@@ -46,6 +51,22 @@ export default function DeviceDashboard({ token }) {
     const interval = setInterval(fetchWeather, 10000); // refresh every 10s
     return () => clearInterval(interval);
   }, []);
+  
+  useEffect(() => {
+  async function fetchHistory() {
+    try {
+      const res = await fetch("http://localhost:5000/api/weather/history?device_id=public-weather&limit=20");
+      const data = await res.json();
+      setHistory(data);
+    } catch (err) {
+      console.error("Error fetching weather history:", err);
+    }
+  }
+
+  fetchHistory();
+}, []);
+
+
 
   return (
   <div className="p-4 space-y-6">
@@ -71,6 +92,34 @@ export default function DeviceDashboard({ token }) {
           <p>Loading weather...</p>
         )}
       </div>
+      <div>
+  <h2 className="text-xl font-semibold mb-2 mt-8">📈 Temperature Trend</h2>
+  {history.length > 0 ? (
+    <ResponsiveContainer width="100%" height={300}>
+      <LineChart data={history}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis
+          dataKey="timestamp"
+          tickFormatter={(ts) => new Date(ts).toLocaleTimeString()}
+          minTickGap={30}
+        />
+        <YAxis unit="°F" />
+        <Tooltip labelFormatter={(ts) => new Date(ts).toLocaleString()} />
+        <Line
+          type="monotone"
+          dataKey="temperature"
+          stroke="#8884d8"
+          strokeWidth={2}
+          dot={{ r: 2 }}
+          activeDot={{ r: 5 }}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  ) : (
+    <p>Loading temperature history...</p>
+  )}
+</div>
+
        </div>
   );
 }
