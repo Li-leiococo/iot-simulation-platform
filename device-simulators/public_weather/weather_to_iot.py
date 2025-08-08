@@ -2,7 +2,9 @@ import ssl
 import json
 import time
 import requests
+import os
 from paho.mqtt import client as mqtt
+from dotenv import load_dotenv
 
 # -------- AWS IoT Core MQTT settings --------
 MQTT_ENDPOINT = "a1o47tv9kzynea-ats.iot.us-east-1.amazonaws.com"  # replace with your AWS IoT endpoint
@@ -16,7 +18,9 @@ CERT_FILE = "certificate.pem.crt"
 KEY_FILE = "private.pem.key"
 
 # -------- Public Weather API settings (or mock) --------
-OPENWEATHER_API_KEY = "808124d15cf1ebbecb15d2e342d34bd7"  # Optional
+#OPENWEATHER_API_KEY = "808124d15cf1ebbecb15d2e342d34bd7"  # Optional
+load_dotenv()
+OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 CITY = "Grand Rapids"
 API_URL = f"https://api.openweathermap.org/data/2.5/weather?q={CITY}&appid={OPENWEATHER_API_KEY}&units=imperial"
 

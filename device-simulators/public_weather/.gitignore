@@ -19,3 +19,6 @@ venv/
 # Mac/Windows system files
 .DS_Store
 Thumbs.db
+.end
+__pycache__/
+*.pem
