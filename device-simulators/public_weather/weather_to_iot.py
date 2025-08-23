@@ -3,11 +3,13 @@ import json
 import time
 import requests
 import os
+import logging
 from paho.mqtt import client as mqtt
 from dotenv import load_dotenv
 
 # -------- AWS IoT Core MQTT settings --------
-MQTT_ENDPOINT = "a1o47tv9kzynea-ats.iot.us-east-1.amazonaws.com"  # replace with your AWS IoT endpoint
+load_dotenv()
+MQTT_ENDPOINT = os.getenv("MQTT_BROKER_HOST")
 MQTT_PORT = 8883
 MQTT_TOPIC = "public/sensor/weather"
 CLIENT_ID = "public-weather-sensor"
@@ -18,17 +20,22 @@ CERT_FILE = "certificate.pem.crt"
 KEY_FILE = "private.pem.key"
 
 # -------- Public Weather API settings (or mock) --------
-#OPENWEATHER_API_KEY = "808124d15cf1ebbecb15d2e342d34bd7"  # Optional
 load_dotenv()
+log = logging.getLogger("sim")
+logging.basicConfig(level=logging.INFO)
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 CITY = "Grand Rapids"
 API_URL = f"https://api.openweathermap.org/data/2.5/weather?q={CITY}&appid={OPENWEATHER_API_KEY}&units=imperial"
 
 # -------- Function to get weather data --------
 def fetch_weather():
+    if not OPENWEATHER_API_KEY:
+        log.error("OPENWEATHER_API_KEY missing")
+        return None  
     try:
         response = requests.get(API_URL)
         data = response.json()
+        print("Fetched raw data:", data)  # 👈 This will print full JSON
         return {
             "temperature": data["main"]["temp"],
             "humidity": data["main"]["humidity"],

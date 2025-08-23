@@ -1,0 +1,7 @@
+FROM node:20-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+# don’t copy the source in build time for dev; we’ll mount it
+EXPOSE 3000
+CMD ["npm","start"]

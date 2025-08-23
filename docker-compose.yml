@@ -10,11 +10,16 @@ services:
       - ./backend:/app
     environment:
       - FLASK_ENV=development
+      - AWS_REGION=us-east-1
+      - DDB_ENDPOINT=http://dynamodb-local:8000   # must match the service name
+      - DDB_TABLE_WEATHER=WeatherReadings
     depends_on:
-      - db
+      - dynamodb
 
   frontend:
-    build: ./frontend
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile.dev
     container_name: react-frontend
     ports:
       - "3000:3000"
@@ -22,18 +27,27 @@ services:
       - ./frontend:/app
     stdin_open: true
     tty: true
+    depends_on:
+      - backend
 
-  db:
-    image: postgres:13
-    container_name: iot-db
-    environment:
-      POSTGRES_USER: iot_user
-      POSTGRES_PASSWORD: iot_pass
-      POSTGRES_DB: iot_sim
+  dynamodb:
+    image: amazon/dynamodb-local
+    container_name: dynamodb-local
     ports:
-      - "5432:5432"
+      - "8000:8000"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-
+      - dynamodb_data:/home/dynamodblocal/data
+    
+  simulator:
+    build: ./device-simulators/public_weather
+    container_name: iot-simulator
+    volumes:
+      - ./device-simulators/public_weather:/app
+    env_file:
+    - ./device-simulators/public_weather/.env
+    depends_on:
+      - backend
+    restart: unless-stopped
+    
 volumes:
-  postgres_data:
+  dynamodb_data:
